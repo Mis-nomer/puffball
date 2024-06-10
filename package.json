@@ -1,0 +1,26 @@
+{
+  "name": "scraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "tsc -p . && node --env-file=.env dist/index.js",
+    "build": "tsc -p . && esbuild dist/index.js --bundle --minify --platform=node --packages=external --outfile=index.js && rm -r dist",
+    "start": "node --env-file=.env index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.14.2",
+    "esbuild": "0.21.4",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "cron": "^3.1.7",
+    "luxon": "^3.4.4",
+    "scrape-it": "^6.1.2"
+  }
+}
