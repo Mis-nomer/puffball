@@ -27,11 +27,11 @@ const scrapper = async (configs: ISiteConfig, siteName: string) => {
     if (is.mt(url, "string")) throw new Error("URL must be a string!");
     const { data } = await scrapeIt<IScrapeResult>(url, scrapeContent);
 
-    if (data.result?.length) {
-      const filteredResult = data.result.filter((result) => {
+    if (data.content?.length) {
+      const filteredResult = data.content.filter((content) => {
         for (let key in filter) {
           let regex = new RegExp(filter[key].join("|"), "i");
-          if (regex.test(strOps.plain(result[key]))) {
+          if (regex.test(strOps.plain(content[key]))) {
             return false;
           }
         }
@@ -57,7 +57,7 @@ const scrapper = async (configs: ISiteConfig, siteName: string) => {
 const scrapeSite = async () => {
   const siteFiles = readdirSync("./sites");
   const scrapeResult = {
-    total: 0,
+    total: siteFiles.length,
     succeed: 0,
     failed: 0,
   };
@@ -67,7 +67,6 @@ const scrapeSite = async () => {
     const siteName = file.split(".")[0]; // get the filename without extension
     const res = await scrapper(siteConfig, siteName);
 
-    scrapeResult.total++;
     res ? scrapeResult.succeed++ : scrapeResult.failed++;
   }
 
@@ -80,7 +79,12 @@ async function main() {
   scrapeSite().then(async (data) => {
     console.log("\nScrape result: " + JSON.stringify(data));
 
-    if (!data.succeed) return;
+    const successChance = parseFloat((data.succeed / data.total).toFixed(2));
+
+    if (successChance <= +(process.env.ABORT_ON || 0)) {
+      console.log("Not enough content, gist aborted");
+      return;
+    }
     await Gist.create();
   });
 }

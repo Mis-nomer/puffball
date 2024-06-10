@@ -1,7 +1,7 @@
 import { ScrapeOptions } from "scrape-it";
 
 export interface IScrapeResult {
-  result: Record<string, string>[];
+  content: Record<string, string>[];
 }
 
 export interface ISiteConfig {
