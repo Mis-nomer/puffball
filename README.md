@@ -1,4 +1,3 @@
-````markdown
 # Puffball Web Scraper
 
 Welcome to the Puffball project! This is a powerful, flexible, and user-friendly web scraping tool designed with the goal of making data collection more efficient and accessible. Whether you're a developer, a data scientist, or just a curious individual, this tool is designed to help you gather and analyze data from the web.
@@ -59,7 +58,6 @@ To use this scraper, add a JSON file into the `/sites` directory. The JSON file 
   }
 }
 ```
-````
 
 ### Field Explanation
 
@@ -84,6 +82,5 @@ To run the program, first build it with `pnpm build`, then start it with `pnpm s
 This project is actively being developed and improved upon. Your contributions and suggestions are welcome!
 
 ```
-
 Please modify it as needed to better suit your project and style. Happy coding!
 ```
