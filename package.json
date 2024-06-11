@@ -1,6 +1,6 @@
 {
   "name": "scraper",
-  "version": "1.0.0",
+  "version": "0.0.5",
   "description": "",
   "main": "index.ts",
   "scripts": {
@@ -10,7 +10,8 @@
     "build": "esbuild dist/index.js --bundle --minify --platform=node --packages=external --outfile=index.js",
     "postbuild": "rm -r dist",
     "start": "node index.js",
-    "start:prod": "pnpm build && pnpm start"
+    "start:prod": "pnpm build && pnpm start",
+    "pm2": "pm2 start pm2.json --env production"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +27,7 @@
     "axios": "^1.7.2",
     "cron": "^3.1.7",
     "luxon": "^3.4.4",
-    "scrape-it": "^6.1.2"
+    "scrape-it": "^6.1.2",
+    "winston": "^3.13.0"
   }
 }
