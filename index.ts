@@ -39,23 +39,23 @@ const mainJob = CronJob.from({
   runOnInit: true,
   start: true,
   onTick: async () => {
-    logger.info("\nMain task starting...");
+    logger.info("Task starting...");
 
-    const isTodayGistEmpty = mt.arr(await STORE.get());
+    const gists = await STORE.get();
+    const isTodayGistEmpty = mt.arr(gists);
     const reschedule = isTodayGistEmpty && (await main());
 
     mainJob.setTime(new CronTime(reschedule ? "0 30 * * * *" : "0 0 8 * * *"));
 
     logger.info(
-      `\nTask rescheduled to ${mainJob
+      `Task rescheduled to ${mainJob
         .nextDate()
         .toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
     );
   },
   onComplete: () => {
-    //@ts-ignore
     logger.info(
-      `\nMain task ran on ${DateTime.fromJSDate(
+      `Task ran on ${DateTime.fromJSDate(
         mainJob.lastExecution || new Date()
       ).toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
     );

@@ -9,7 +9,7 @@ import { join } from "node:path";
 import scrapeIt from "scrape-it";
 import { ISiteConfig, IScrapeResult } from "../common/type";
 import { mt, strOps, nowTS } from "./utils";
-
+import logger from "./logger";
 const scrapper = async (configs: ISiteConfig, siteName: string) => {
   const { url, filter, format, instructions } = configs;
   const dir = "./logs";
@@ -41,10 +41,10 @@ const scrapper = async (configs: ISiteConfig, siteName: string) => {
       });
     }
 
-    console.log("\nData written into " + fileName);
+    logger.info("\nData written into " + fileName);
     operationResult = true;
   } catch (error) {
-    console.log((error as Error)?.message);
+    logger.error((error as Error)?.message);
   } finally {
     stream.end();
   }
@@ -69,7 +69,7 @@ export const scrapeSite = async () => {
 
       res ? scrapeResult.succeed++ : scrapeResult.failed++;
     } catch (error) {
-      console.log((error as Error)?.message);
+      logger.error((error as Error)?.message);
     }
   }
 

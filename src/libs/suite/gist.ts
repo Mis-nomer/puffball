@@ -10,6 +10,7 @@ import { Suite, Gists, GistFile } from "../../common/type";
 const readdir = util.promisify(fs.readdir);
 const readFile = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
+
 const defaultHeaders = {
   Accept: "application/vnd.github+json",
   Authorization: `Bearer ${process.env.GIT_TOKEN}`,
@@ -23,8 +24,8 @@ class GistSuite
 
   private headers = defaultHeaders;
 
-  constructor(headers?: any, dir?: string) {
-    this.headers = headers;
+  constructor(headers?: NonNullable<any>, dir?: string) {
+    if (!mt.obj(headers)) this.headers = headers;
     if (dir) this.dir = dir;
   }
 

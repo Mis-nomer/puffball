@@ -29,7 +29,7 @@ To use this scraper, add a JSON file into the `/sites` directory. The JSON file 
   },
   "format": "\nJob Title: ${title}\nCompany: ${company}\nDate: ${date}\nLocation: ${location}\nLink: ${link}\nSalary: ${salary}\n------------------------\n",
   "url": "https://www.topcv.vn/tim-viec-lam-frontend-developer-tai-ha-noi-kl1?sort=new",
-  "scrapeContent": {
+  "instructions": {
     "content": {
       "listItem": ".job-item-search-result",
       "data": {
@@ -64,7 +64,7 @@ To use this scraper, add a JSON file into the `/sites` directory. The JSON file 
 - `filter`: This field is used to filter the scraped data. The keys should match the keys in the `data` field of `scrapeContent`. The values are arrays of strings that the corresponding data field should contain.
 - `format`: This is the format of the output. You can use `${key}` to substitute the value of the corresponding key in the scraped data.
 - `url`: The URL of the website to scrape.
-- `scrapeContent`: The configuration for the scraping. `result` is the root element to scrape, and `data` contains the selectors for the data fields to scrape.
+- `instructions`: The configuration for the scraping. `content` is the root element to scrape, and `data` contains the selectors for the data fields to scrape.
 
 ## Environment Variables
 
