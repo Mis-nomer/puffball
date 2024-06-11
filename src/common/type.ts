@@ -8,7 +8,7 @@ export interface ISiteConfig {
   url: string;
   filter: Record<string, string[]>;
   format: string;
-  scrapeContent: ScrapeOptions;
+  instructions: ScrapeOptions;
 }
 
 export interface File {

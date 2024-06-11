@@ -4,9 +4,13 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "dev": "tsc -p . && node --env-file=.env dist/index.js",
-    "build": "tsc -p . && esbuild dist/index.js --bundle --minify --platform=node --packages=external --outfile=index.js && rm -r dist",
-    "start": "node --env-file=.env index.js"
+    "predev": "tsc",
+    "dev": "node dist/index.js",
+    "prebuild": "tsc",
+    "build": "esbuild dist/index.js --bundle --minify --platform=node --packages=external --outfile=index.js",
+    "postbuild": "rm -r dist",
+    "start": "node index.js",
+    "start:prod": "pnpm build && pnpm start"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +18,7 @@
   "devDependencies": {
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.14.2",
+    "dotenv": "^16.4.5",
     "esbuild": "0.21.4",
     "typescript": "^5.4.5"
   },

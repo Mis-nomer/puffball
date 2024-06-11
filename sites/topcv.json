@@ -4,8 +4,8 @@
   },
   "format": "\nJob Title: ${title}\nCompany: ${company}\nDate: ${date}\nLocation: ${location}\nLink: ${link}\nSalary: ${salary}\n------------------------\n",
   "url": "https://www.topcv.vn/tim-viec-lam-frontend-developer-tai-ha-noi-kl1?sort=new",
-  "scrapeContent": {
-    "result": {
+  "instructions": {
+    "content": {
       "listItem": ".job-item-search-result",
       "data": {
         "title": {

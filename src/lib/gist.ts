@@ -1,10 +1,10 @@
 import axios, { AxiosError } from "axios";
-import { Gists, File } from "./common/type";
+import { Gists, File } from "../common/type";
 import { DateTime } from "luxon";
-import fs, { rmSync } from "fs";
+import fs from "fs";
 import util from "util";
 import path from "path";
-import { is } from "./utils";
+import { mt } from "./utils";
 
 const readdir = util.promisify(fs.readdir);
 const readFile = util.promisify(fs.readFile);
@@ -26,7 +26,7 @@ class Gist {
     newDate?: string | undefined
   ) {
     if (newDir) this.dir = newDir;
-    if (!is.mt(newHeaders, "object")) this.headers = newHeaders!;
+    if (!mt.obj(newHeaders)) this.headers = newHeaders!;
     if (newDate) this.date = newDate;
   }
 
