@@ -11,7 +11,7 @@ export interface ISiteConfig {
   instructions: ScrapeOptions;
 }
 
-export interface File {
+export interface GistFile {
   filename: string;
   type: string;
   language: string;
@@ -52,7 +52,7 @@ export interface Gist {
   git_pull_url: string;
   git_push_url: string;
   html_url: string;
-  files: { [key: string]: File };
+  files: { [key: string]: GistFile };
   public: boolean;
   created_at: string;
   updated_at: string;
@@ -64,3 +64,18 @@ export interface Gist {
 }
 
 export type Gists = Gist[];
+
+export interface Uploader {
+  upload(file: string, content: string): Promise<any>;
+}
+
+export interface Getter {
+  get(): Promise<any[] | undefined>;
+}
+
+export type NonNullable<T> = T extends null | undefined ? never : T;
+
+export interface Suite<T, U> {
+  create(): Promise<T>;
+  get(): Promise<U | undefined>;
+}

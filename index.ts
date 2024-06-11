@@ -1,11 +1,13 @@
 import "dotenv/config";
 import { CronJob, CronJobParams, CronTime } from "cron";
-import { scrapeSite } from "./src/lib/scrape";
-import logger from "./src/lib/logger";
-import Gist from "./src/lib/gist";
-import { mt } from "./src/lib/utils";
 import { DateTime, Settings, IANAZone } from "luxon";
 
+import { scrapeSite } from "./src/libs/scrape";
+import logger from "./src/libs/logger";
+import Gist from "./src/libs/suite/gist";
+import { mt } from "./src/libs/utils";
+
+const STORE = new Gist();
 const TZ = new IANAZone(process.env.TZ || "Asia/Ho_Chi_Minh");
 
 Settings.defaultZone = TZ.isValid ? TZ.name : "system";
@@ -23,7 +25,7 @@ async function main(): Promise<boolean> {
     return false;
   }
 
-  return await Gist.create();
+  return await STORE.create();
 }
 
 const defaultSettings: Partial<CronJobParams> = {
@@ -39,7 +41,7 @@ const mainJob = CronJob.from({
   onTick: async () => {
     logger.info("\nMain task starting...");
 
-    const isTodayGistEmpty = mt.arr(await Gist.get());
+    const isTodayGistEmpty = mt.arr(await STORE.get());
     const reschedule = isTodayGistEmpty && (await main());
 
     mainJob.setTime(new CronTime(reschedule ? "0 30 * * * *" : "0 0 8 * * *"));

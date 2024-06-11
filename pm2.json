@@ -7,10 +7,12 @@
       "restart_delay": 30000,
       "instance": 1,
       "env_production": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "PM2_ON": true
       },
       "env_development": {
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "PM2_ON": false
       }
     }
   ]

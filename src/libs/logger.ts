@@ -18,7 +18,7 @@ const logger = createLogger({
 });
 
 // If we're not in production then log to the `console`
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" || !Boolean(process.env.PM2_ON)) {
   logger.add(
     new transports.Console({
       format: format.combine(format.colorize(), format.simple()),
