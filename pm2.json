@@ -3,7 +3,15 @@
     {
       "name": "puffball",
       "script": "pnpm",
-      "args": "start:prod"
+      "args": "start:prod",
+      "restart_delay": 30000,
+      "instance": 1,
+      "env_production": {
+        "NODE_ENV": "production"
+      },
+      "env_development": {
+        "NODE_ENV": "development"
+      }
     }
   ]
 }

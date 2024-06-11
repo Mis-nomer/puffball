@@ -1,22 +1,29 @@
 import "dotenv/config";
-import { CronJob, CronJobParams } from "cron";
-import Gist from "./src/lib/gist";
+import { CronJob, CronJobParams, CronTime } from "cron";
 import { scrapeSite } from "./src/lib/scrape";
+import logger from "./src/lib/logger";
+import Gist from "./src/lib/gist";
+import { mt } from "./src/lib/utils";
+import { DateTime, Settings, IANAZone } from "luxon";
 
-async function main() {
-  console.log("\nMain job starting...");
+const TZ = new IANAZone(process.env.TZ || "Asia/Ho_Chi_Minh");
 
-  scrapeSite().then(async (data) => {
-    console.log("\nScrape result: " + JSON.stringify(data));
+Settings.defaultZone = TZ.isValid ? TZ.name : "system";
 
-    const successChance = parseFloat((data.succeed / data.total).toFixed(2));
+async function main(): Promise<boolean> {
+  logger.info("\nMain job starting...");
 
-    if (successChance <= +(process.env.ABORT_ON || 0)) {
-      console.log("Not enough content, gist aborted");
-      return;
-    }
-    await Gist.create();
-  });
+  const scrapeResult = await scrapeSite();
+  const successChance = parseFloat(
+    (scrapeResult.succeed / scrapeResult.total).toFixed(2)
+  );
+
+  if (successChance <= +(process.env.ABORT_ON || 0)) {
+    logger.warn("Not enough content, gist creation aborted");
+    return false;
+  }
+
+  return await Gist.create();
 }
 
 const defaultSettings: Partial<CronJobParams> = {
@@ -24,24 +31,41 @@ const defaultSettings: Partial<CronJobParams> = {
   start: true,
 };
 
-const fallbackJob = CronJob.from({
+const mainJob = CronJob.from({
   ...defaultSettings,
-  cronTime: "* 30 * * * *",
+  cronTime: "0 30 * * * *",
   runOnInit: true,
+  start: true,
   onTick: async () => {
-    console.log("\nFallback job starting...");
-    const gistFiles = await Gist.get();
+    logger.info("\nMain task starting...");
 
-    if (!gistFiles || !gistFiles?.length) {
-      console.log("\nFallback job starting...");
-      await main();
-    }
+    const isTodayGistEmpty = mt.arr(await Gist.get());
+    const reschedule = isTodayGistEmpty && (await main());
+
+    mainJob.setTime(new CronTime(reschedule ? "0 30 * * * *" : "0 0 8 * * *"));
+
+    logger.info(
+      `\nTask rescheduled to ${mainJob
+        .nextDate()
+        .toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
+    );
+  },
+  onComplete: () => {
+    //@ts-ignore
+    logger.info(
+      `\nMain task ran on ${DateTime.fromJSDate(
+        mainJob.lastExecution || new Date()
+      ).toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
+    );
   },
 });
 
-CronJob.from({
-  ...defaultSettings,
-  cronTime: "* 0 8 * * *",
-  onTick: main,
-  onComplete: () => fallbackJob.stop(),
-});
+process
+  .on("unhandledRejection", (reason, p) => {
+    logger.error(reason + "\nUnhandled Rejection at Promise", p);
+    process.exit(1);
+  })
+  .on("uncaughtException", (err) => {
+    logger.error(err?.message + "\nUncaught Exception thrown");
+    process.exit(1);
+  });
