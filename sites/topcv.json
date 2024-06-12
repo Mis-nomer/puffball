@@ -4,30 +4,27 @@
   },
   "format": "\nJob Title: ${title}\nCompany: ${company}\nDate: ${date}\nLocation: ${location}\nLink: ${link}\nSalary: ${salary}\n------------------------\n",
   "url": "https://www.topcv.vn/tim-viec-lam-frontend-developer-tai-ha-noi-kl1?sort=new",
-  "instructions": {
-    "content": {
-      "listItem": ".job-item-search-result",
-      "data": {
-        "title": {
-          "selector": ".body h3.title span",
-          "attr": "title"
-        },
-        "company": {
-          "selector": ".body a.company"
-        },
-        "date": {
-          "selector": ".info .label-content label.address:last-child"
-        },
-        "salary": {
-          "selector": ".box-right label.title-salary"
-        },
-        "location": {
-          "selector": ".info .label-content label.address:first-child"
-        },
-        "link": {
-          "selector": ".body h3.title a",
-          "attr": "href"
-        }
+  "html": {
+    "list": ".job-item-search-result",
+    "data": {
+      "title": {
+        "selector": ".body h3.title span"
+      },
+      "company": {
+        "selector": ".body a.company"
+      },
+      "date": {
+        "selector": ".info .label-content label.address:last-child"
+      },
+      "salary": {
+        "selector": ".box-right label.title-salary"
+      },
+      "location": {
+        "selector": ".info .label-content label.address:first-child"
+      },
+      "link": {
+        "selector": ".body h3.title a",
+        "attr": "href"
       }
     }
   }

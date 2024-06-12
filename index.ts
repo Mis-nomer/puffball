@@ -2,7 +2,7 @@ import "dotenv/config";
 import { CronJob, CronJobParams, CronTime } from "cron";
 import { DateTime, Settings, IANAZone } from "luxon";
 
-import { scrapeSite } from "./src/libs/scrape";
+import { concurrentCluster } from "./src/libs/cluster";
 import logger from "./src/libs/logger";
 import Gist from "./src/libs/suite/gist";
 import { mt } from "./src/libs/utils";
@@ -11,19 +11,10 @@ const STORE = new Gist();
 const TZ = new IANAZone(process.env.TZ || "Asia/Ho_Chi_Minh");
 
 Settings.defaultZone = TZ.isValid ? TZ.name : "system";
-
 async function main(): Promise<boolean> {
   logger.info("\nMain job starting...");
 
-  const scrapeResult = await scrapeSite();
-  const successChance = parseFloat(
-    (scrapeResult.succeed / scrapeResult.total).toFixed(2)
-  );
-
-  if (successChance <= +(process.env.ABORT_ON || 0)) {
-    logger.warn("Not enough content, gist creation aborted");
-    return false;
-  }
+  await concurrentCluster();
 
   return await STORE.create();
 }

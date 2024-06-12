@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs, { existsSync, mkdirSync } from "fs";
 import util from "util";
 import path from "path";
 import { DateTime } from "luxon";
@@ -20,13 +20,14 @@ const defaultHeaders = {
 class GistSuite
   implements Suite<boolean, Pick<GistFile, "filename" | "raw_url">[]>
 {
-  dir = path.resolve(process.cwd(), "logs");
-
+  dir = path.resolve(process.cwd(), "temp");
   private headers = defaultHeaders;
 
-  constructor(headers?: NonNullable<any>, dir?: string) {
+  constructor(dir?: string, headers?: NonNullable<any>) {
+    if (!mt.str(dir)) this.dir = path.resolve(process.cwd(), dir!);
     if (!mt.obj(headers)) this.headers = headers;
-    if (dir) this.dir = dir;
+    console.log(this.dir);
+    if (!existsSync(this.dir)) mkdirSync(this.dir);
   }
 
   async create(): Promise<boolean> {
@@ -56,8 +57,7 @@ class GistSuite
         );
 
         logger.info(
-          `\nGist ${file} created: `,
-          response?.data?.files[file]?.raw_url
+          `\nGist ${file} created: ${response?.data?.files[file]?.raw_url}`
         );
         await unlink(filePath);
       }

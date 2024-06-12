@@ -1,14 +1,23 @@
-import { ScrapeOptions } from "scrape-it";
-
 export interface IScrapeResult {
   content: Record<string, string>[];
 }
 
-export interface ISiteConfig {
+export interface ScrapeOptionElement {
+  selector?: string;
+  convert?: (value: any) => any;
+  attr?: string;
+}
+
+export interface ScrapeInstruction {
   url: string;
   filter: Record<string, string[]>;
   format: string;
-  instructions: ScrapeOptions;
+  html: {
+    list: string;
+    data: {
+      [key: string]: ScrapeOptionElement;
+    };
+  };
 }
 
 export interface GistFile {

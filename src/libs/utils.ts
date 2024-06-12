@@ -46,7 +46,6 @@ export class strOps {
     return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   }
 }
-
 export const nowTS = () => {
   const date = new Date();
   return date
@@ -57,3 +56,6 @@ export const nowTS = () => {
     })
     .replace(/\//g, "");
 };
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
