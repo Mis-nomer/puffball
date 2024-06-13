@@ -1,38 +1,45 @@
+import { DateTime } from "luxon";
 import { Cluster } from "puppeteer-cluster";
-import logger from "./logger";
+
 import { mt } from "./utils";
-import { scraper } from "./scrape";
-import { instructionParser } from "./scrape";
+import { scraper, instructionParser } from "./scrape";
+import logger from "./logger";
 
 export const concurrentCluster = async () => {
-  try {
-    const cluster = await Cluster.launch({
-      concurrency: Cluster.CONCURRENCY_BROWSER,
-      maxConcurrency: 2,
-      retryDelay: 60 * 1000,
-      retryLimit: 3,
-    });
+  const taskStart = DateTime.now();
 
-    await cluster.task(scraper);
+  const cluster = await Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_BROWSER,
+    maxConcurrency: 3,
+    retryDelay: 60 * 1000,
+    retryLimit: 3,
+  });
 
-    // Load instructions from ./sites/*.json
-    const instructions = await instructionParser();
+  await cluster.task(scraper);
 
-    if (mt.obj(instructions)) {
-      logger.error("[libs/scrape.ts] - Unable to retrieve instructions");
+  // Load instructions from ./sites/*.json
+  const instructions = await instructionParser();
+
+  if (mt.obj(instructions)) {
+    logger.error("[libs/scrape.ts] - Unable to retrieve instructions");
+    return;
+  }
+
+  for (const [site, configs] of Object.entries(instructions)) {
+    if (mt.str(site) || mt.obj(configs)) {
+      logger.error("[libs/scrape.ts] - Bad instructions format");
       return;
     }
+    // Queue each site with its corresponding configs
+    cluster.queue({ configs, site });
+  }
 
-    for (const [site, configs] of Object.entries(instructions)) {
-      if (mt.str(site) || mt.obj(configs)) {
-        logger.error("[libs/scrape.ts] - Bad instructions format");
-        return;
-      }
-      // Queue each site with its corresponding configs
-      await cluster.queue({ configs, site });
-    }
-    await cluster.idle();
+  await cluster.idle();
+
+  try {
     await cluster.close();
+    const timeTaken = DateTime.now().diff(taskStart).toObject().milliseconds;
+    logger.info(`Task took ${timeTaken}ms (${timeTaken! / 1000}s)`);
   } catch (error) {
     logger.error((error as Error)?.message);
     throw error;

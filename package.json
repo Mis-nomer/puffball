@@ -17,7 +17,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@faker-js/faker": "^8.4.1",
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.14.2",
     "dotenv": "^16.4.5",
@@ -25,8 +24,10 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@stableproxy/puppeteer-page-proxy": "^2.3.2",
     "axios": "^1.7.2",
     "cron": "^3.1.7",
+    "fingerprint-injector": "^2.1.52",
     "luxon": "^3.4.4",
     "puppeteer": "^22.10.1",
     "puppeteer-cluster": "^0.24.0",

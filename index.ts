@@ -11,6 +11,7 @@ const STORE = new Gist();
 const TZ = new IANAZone(process.env.TZ || "Asia/Ho_Chi_Minh");
 
 Settings.defaultZone = TZ.isValid ? TZ.name : "system";
+
 async function main(): Promise<boolean> {
   logger.info("\nMain job starting...");
 

@@ -3,7 +3,7 @@ import util from "util";
 import path from "path";
 import { DateTime } from "luxon";
 import axios, { AxiosError } from "axios";
-import { mt } from "../utils";
+import { mt, nowTS } from "../utils";
 import logger from "../logger";
 import { Suite, Gists, GistFile } from "../../common/type";
 
@@ -26,7 +26,6 @@ class GistSuite
   constructor(dir?: string, headers?: NonNullable<any>) {
     if (!mt.str(dir)) this.dir = path.resolve(process.cwd(), dir!);
     if (!mt.obj(headers)) this.headers = headers;
-    console.log(this.dir);
     if (!existsSync(this.dir)) mkdirSync(this.dir);
   }
 
@@ -81,17 +80,20 @@ class GistSuite
       const gists = response.data;
       const files = gists.map((gist) => Object.values(gist.files)[0]);
 
+      const filteredFiles = files.filter((file) => {
+        const regexp = new RegExp(nowTS(), "gi");
+        return regexp.test(file.filename);
+      });
+
       if (mt.arr(files)) {
         logger.warn("No gist found!");
-        return files;
+        return;
+      } else {
+        logger.info(
+          `Found ${filteredFiles.length} gists. Main task rescheduling...`
+        );
+        return filteredFiles;
       }
-
-      const result = files.map(({ filename, raw_url }) => ({
-        filename,
-        raw_url,
-      }));
-
-      return result;
     } catch (error) {
       logger.error(`Error: ${(error as AxiosError)?.message}`);
       return;

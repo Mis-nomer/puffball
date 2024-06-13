@@ -1,21 +1,22 @@
-import { createWriteStream, existsSync, mkdirSync } from "node:fs";
+import fs from "node:fs";
+import path from "node:path";
 import { Page } from "puppeteer";
-import { faker } from "@faker-js/faker";
-import path from "path";
-import fs from "fs";
-import logger from "./logger";
+import { newInjectedPage } from "fingerprint-injector";
+
 import { ScrapeInstruction } from "../common/type";
 import { nowTS, strOps } from "./utils";
+import logger from "./logger";
+
+// Store scraped data
 const store = (
   siteName: string,
   data: string,
   dir = path.resolve(process.cwd(), "temp")
 ) => {
-  const fileName = `${dir}/${siteName}_${nowTS()}.log`;
-  const stream = createWriteStream(fileName, { flags: "a" });
+  const fileName = path.join(dir, `${siteName}_${nowTS()}.log`);
+  const stream = fs.createWriteStream(fileName, { flags: "a" });
   try {
-    if (!existsSync(dir)) mkdirSync(dir);
-
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
     stream.write(data);
   } catch (error) {
     logger.error((error as Error)?.message);
@@ -23,109 +24,82 @@ const store = (
   stream.end();
 };
 
-const requestHeaders = {
-  authority: "www.google.com",
-  accept:
-    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-  "accept-language": "en-US,en;q=0.9",
-  "cache-control": "max-age=0",
-  "sec-ch-ua-arch": '"x86"',
-  "sec-ch-ua-bitness": '"64"',
-  "sec-ch-ua-full-version": '"120.0.0.0"',
-  "sec-ch-ua-mobile": "?0",
-  "sec-ch-ua-wow64": "?0",
-  "sec-fetch-dest": "document",
-  "sec-fetch-mode": "navigate",
-  "sec-fetch-site": "same-origin",
-  "sec-fetch-user": "?1",
-  "upgrade-insecure-requests": "1",
-};
-
+// Main scraper function
 export const scraper = async ({
-  page,
+  page: oldPage,
   data,
 }: {
   page: Page;
   data: { configs: ScrapeInstruction; site: string };
 }) => {
-  const randomUA = faker.internet.userAgent();
   const { configs, site } = data;
 
-  await page.setUserAgent(randomUA);
-  await page.setExtraHTTPHeaders({
-    ...requestHeaders,
-  });
+  // This masks the bot's fingerprints
+  const page = await newInjectedPage(oldPage.browser());
 
-  page.on("request", (request) => {
-    logger.debug(request.url());
-  });
+  // Log requests and responses
+  page.on("request", (request) => logger.debug(request.url()));
+  page.on("response", (response) => logger.debug(response.url()));
 
-  page.on("response", (response) => {
-    logger.debug(response.url());
-  });
-
-  // page.on("console", (msg) => {
-  //   const type = msg.type();
-  //   if (type === "error") {
-  //     logger.error(msg.text());
-  //   }
-  // });
-
-  await page.goto(configs.url);
-
-  //! Scraper only target list or parent element that contain multiple similiar children
-  const listHandle = await page.$$(configs.html.list);
-  const scrapeData = [];
-
-  for (const item of listHandle) {
-    const rawData = await page.evaluate(
-      (configs, item) => {
-        let parseData: Record<string, any> = {};
-
-        for (const [field, { selector, attr }] of Object.entries(
-          configs.html.data
-        )) {
-          const element = item.querySelector(selector!);
-          if (!element) continue;
-
-          parseData[field] = attr
-            ? element.getAttribute(attr)?.trim()
-            : element.textContent?.trim();
-        }
-
-        return parseData;
-      },
-      configs,
-      item
-    );
-
-    scrapeData.push(rawData);
+  try {
+    await page.goto(configs.url);
+  } catch (error) {
+    logger.error(`Failed to navigate to ${configs.url}`);
+    return;
   }
 
+  // Scrape the target list or parent element that contains multiple similar children
+  const listHandle = await page.$$(configs.html.list);
+
+  const scrapeData = await Promise.all(
+    listHandle.map((item) =>
+      page.evaluate(
+        (configs, item) => {
+          let parseData: Record<string, any> = {};
+
+          // Extract the required data from each item
+          for (const [field, { selector, attr }] of Object.entries(
+            configs.html.data
+          )) {
+            const element = item.querySelector(selector!);
+            if (!element) continue;
+            parseData[field] = attr
+              ? element.getAttribute(attr)?.trim()
+              : element.textContent?.trim();
+          }
+
+          return parseData;
+        },
+        configs,
+        item
+      )
+    )
+  );
+
+  // Filter the scraped data based on the provided filter rules
   const filteredData = scrapeData.filter((data) => {
     for (let key in configs.filter) {
       let regex = new RegExp(configs.filter[key].join("|"), "i");
-
       if (regex.test(strOps.plain(data[key]))) return false;
     }
     return true;
   });
 
+  // Store the filtered data
   filteredData.forEach((data) =>
     store(site, strOps.literal(configs.format, data))
   );
+
+  await page.close();
 };
 
 export const instructionParser = async (
   dir = path.resolve(process.cwd(), "sites")
 ) => {
   const templates = fs.readdirSync(dir);
-  const processResult = {
-    total: templates.length,
-    success: 0,
-    failure: 0,
-  };
+  const processResult = { total: templates.length, success: 0, failure: 0 };
 
+  // Parse each template and generate the scraping instructions
   const instructions = templates.reduce((prev, template) => {
     try {
       const filePath = path.join(dir, template);
