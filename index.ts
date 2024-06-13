@@ -1,11 +1,13 @@
 import "dotenv/config";
 import { CronJob, CronJobParams, CronTime } from "cron";
-import { scrapeSite } from "./src/lib/scrape";
-import logger from "./src/lib/logger";
-import Gist from "./src/lib/gist";
-import { mt } from "./src/lib/utils";
 import { DateTime, Settings, IANAZone } from "luxon";
 
+import { concurrentCluster } from "./src/libs/cluster";
+import logger from "./src/libs/logger";
+import Gist from "./src/libs/suite/gist";
+import { mt } from "./src/libs/utils";
+
+const STORE = new Gist();
 const TZ = new IANAZone(process.env.TZ || "Asia/Ho_Chi_Minh");
 
 Settings.defaultZone = TZ.isValid ? TZ.name : "system";
@@ -13,17 +15,9 @@ Settings.defaultZone = TZ.isValid ? TZ.name : "system";
 async function main(): Promise<boolean> {
   logger.info("\nMain job starting...");
 
-  const scrapeResult = await scrapeSite();
-  const successChance = parseFloat(
-    (scrapeResult.succeed / scrapeResult.total).toFixed(2)
-  );
+  await concurrentCluster();
 
-  if (successChance <= +(process.env.ABORT_ON || 0)) {
-    logger.warn("Not enough content, gist creation aborted");
-    return false;
-  }
-
-  return await Gist.create();
+  return await STORE.create();
 }
 
 const defaultSettings: Partial<CronJobParams> = {
@@ -37,23 +31,23 @@ const mainJob = CronJob.from({
   runOnInit: true,
   start: true,
   onTick: async () => {
-    logger.info("\nMain task starting...");
+    logger.info("Task starting...");
 
-    const isTodayGistEmpty = mt.arr(await Gist.get());
+    const gists = await STORE.get();
+    const isTodayGistEmpty = mt.arr(gists);
     const reschedule = isTodayGistEmpty && (await main());
 
     mainJob.setTime(new CronTime(reschedule ? "0 30 * * * *" : "0 0 8 * * *"));
 
     logger.info(
-      `\nTask rescheduled to ${mainJob
+      `Task rescheduled to ${mainJob
         .nextDate()
         .toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
     );
   },
   onComplete: () => {
-    //@ts-ignore
     logger.info(
-      `\nMain task ran on ${DateTime.fromJSDate(
+      `Task ran on ${DateTime.fromJSDate(
         mainJob.lastExecution || new Date()
       ).toLocaleString(DateTime.DATETIME_MED_WITH_SECONDS)}`
     );
